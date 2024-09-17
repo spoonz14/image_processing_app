@@ -9,4 +9,13 @@ def apply_filters(self):
 
 
 def main():
-    return True
+
+    import streamlit as st
+    st.title("Image Processor")
+
+    uploaded_file = st.file_uploader("Choose an Image to Process", type = "JPEG")
+
+    if uploaded_file is not None:
+        st.write("File Uploaded")
+
+main()
