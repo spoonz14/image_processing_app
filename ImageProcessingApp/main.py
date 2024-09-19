@@ -26,7 +26,10 @@ def main():
 
         filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing"])
 
+        saved_img = ' '
         processed_img = apply_filters(img_array, filter_type)
+
+        saved_img = processed_img
 
         if filter_type == "Grayscale":
             st.image(processed_img, caption="Processed Image", use_column_width=True, channels="GRAY") #If Greyscale filter chosen
