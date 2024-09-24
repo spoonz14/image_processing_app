@@ -18,7 +18,22 @@ def apply_filters(image, filter_type):
     elif filter_type == "GaussianBlur":
         return cv2.GaussianBlur(image, (15, 15), 0)
     elif filter_type == "Median":
-        return cv2.medianBlur(image, 15)
+        return cv2.medianBlur(image, 3)
+    elif filter_type == "Equalize":
+        if len(image.shape) == 3:  # Convert to grayscale if it's a color image
+            gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+            return cv2.equalizeHist(gray_image)
+        return cv2.equalizeHist(image)
+    elif filter_type == "CLAHE":
+        if len(image.shape) == 3:
+            gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        else:
+            gray_image = image
+        clahe = cv2.createCLAHE(clipLimit=5)
+        return clahe.apply(gray_image)
+    elif filter_type == "Binary":
+        _, binary_image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        return cv2.bitwise_not(binary_image)  # Invert the binary image
     return image  # Return the original image if filter type is None
 
 def main():
@@ -43,12 +58,13 @@ def main():
             st.session_state.saved_img = img_array
             st.session_state.processed_img = img_array.copy()  # Initialize processed image
 
-        # Display the original uploaded image
-        st.image(st.session_state.saved_img, caption="Original Image", use_column_width=True)
+        elif st.session_state.saved_img is not None:
+            # Display the original uploaded image
+            st.image(st.session_state.saved_img, caption="Original Image", use_column_width=True)
 
         smoothing_choice = st.selectbox("Choose smoothing type", ["GaussianBlur", "Median"])
 
-        filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing"], key="filter_choice")
+        filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing", "Equalize", "CLAHE", "Binary"], key="filter_choice")
 
         if st.button("Apply Filter"):
             if filter_type == "Smoothing":
@@ -66,6 +82,12 @@ def main():
                 st.image(st.session_state.processed_img, caption="Processed Image (Grayscale)", use_column_width=True, channels="GRAY")
             elif filter_type == "Smoothing":
                 st.image(st.session_state.processed_img, caption="Processed Image (Smoothing)", use_column_width=True)
+            elif filter_type == "Equalize":
+                st.image(st.session_state.processed_img, caption="Processed Image (Equalization)", use_column_width=True)
+            elif filter_type == "CLAHE":
+                st.image(st.session_state.processed_img, caption="Processed Image (CLAHE)", use_column_width=True)
+            elif filter_type == "Binary":
+                st.image(st.session_state.processed_img, caption="Processed Image (Binary)", use_column_width=True)
 
         if st.button("Reset"):
             st.session_state.saved_img = None  # Reset saved image
