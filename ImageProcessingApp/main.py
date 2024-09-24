@@ -3,13 +3,22 @@ import streamlit as st
 import cv2
 from PIL import Image
 
+def choose_smoothing(smoothing_choice):
+    # Change filters depending on choice input
+    if smoothing_choice == "GaussianBlur":
+        return "GaussianBlur"
+    elif smoothing_choice == "Median":
+        return "Median"
+
 def apply_filters(image, filter_type):
     # Ensure the input image is in the correct format for the selected filter
     if filter_type == "Grayscale":
         if len(image.shape) == 3:  # Only convert if it's a color image
             return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    elif filter_type == "Smoothing":
+    elif filter_type == "GaussianBlur":
         return cv2.GaussianBlur(image, (15, 15), 0)
+    elif filter_type == "Median":
+        return cv2.medianBlur(image, 15)
     return image  # Return the original image if filter type is None
 
 def main():
@@ -37,15 +46,20 @@ def main():
         # Display the original uploaded image
         st.image(st.session_state.saved_img, caption="Original Image", use_column_width=True)
 
+        smoothing_choice = st.selectbox("Choose smoothing type", ["GaussianBlur", "Median"])
+
         filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing"], key="filter_choice")
 
         if st.button("Apply Filter"):
+            if filter_type == "Smoothing":
+                chosen_smoothing = choose_smoothing(smoothing_choice)
+                st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_smoothing)
+            elif filter_type != "None":
+                st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type)
+
+            # Update saved_img to the latest processed image only if filter was applied
             if filter_type != "None":
-                # Apply the selected filter to the current processed image
-                st.session_state.processed_img = apply_filters(st.session_state.processed_img, filter_type)
-                # Update saved_img to the latest processed image only if filter was applied
-                if filter_type != "None":
-                    st.session_state.saved_img = st.session_state.processed_img.copy()
+                st.session_state.saved_img = st.session_state.processed_img.copy()
 
             # Display the processed image
             if filter_type == "Grayscale":
