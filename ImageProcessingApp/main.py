@@ -16,33 +16,61 @@ def main():
     if 'key' not in st.session_state:
         st.session_state['key'] = 'value'
 
-    # Session State also supports attribute based syntax
-    if 'key' not in st.session_state:
-        st.session_state.key = 'value'
+    if 'count' not in st.session_state:
+        st.session_state.count = 0
+
+    if 'saved_img' not in st.session_state:
+        st.session_state.saved_img = None
+
+    def set_count(i):
+        st.session_state.count = i
 
     st.title("Image Processor")
 
-    uploaded_file = st.file_uploader("Choose an Image to Process", type=["jpeg", "jpg", "png"]) #accepts JPEG, PNG, and JPG image types for processing
+    uploaded_file = st.file_uploader("Choose an Image to Process", type=["jpeg", "jpg", "png"], on_change=set_count, args=[0]) #accepts JPEG, PNG, and JPG image types for processing
 
     if uploaded_file is not None: #Checks if file is uploaded
         st.write("File Uploaded")
+        img = Image.open(uploaded_file)  # Uses PIL library to open image
+        img_array = np.array(img)  # Image converted to NumPy array, so it can be processed by OpenCV, array represents pixel values (RBG format)
 
-        img = Image.open(uploaded_file) #Uses PIL library to open image
-        img_array = np.array(img) #Image converted to NumPy array so it can be processed by OpenCV, array represents pixel values (RBG format)
+        if st.session_state.count == 0:
+            st.image(img, caption="Uploaded Image", use_column_width=True)
 
-        st.image(img, caption="Uploaded Image", use_column_width=True)
+            # Display the current count
+            st.write("Current count:", st.session_state.count)
 
-        filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing"], key="filter_choice")
+        filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing"], key="filter_choice", on_change=set_count, args=[1])
 
-        saved_img = ' '
-        processed_img = apply_filters(img_array, filter_type)
+        if st.session_state.count == 1:
 
-        saved_img = processed_img
+            processed_img = apply_filters(img_array, filter_type)
 
-        if filter_type == "Grayscale":
-            st.image(processed_img, caption="Processed Image", use_column_width=True, channels="GRAY") #If Greyscale filter chosen
-        elif filter_type == "Smoothing":
-            st.image(processed_img, caption="Processed Image", use_column_width=True) #If Smoothing or none - both are in RBG 
+            saved_img = processed_img
+
+            if filter_type == "Grayscale":
+                st.image(processed_img, caption="Processed Image", use_column_width=True, channels="GRAY") #If Greyscale filter chosen
+
+            elif filter_type == "Smoothing":
+                st.image(processed_img, caption="Processed Image", use_column_width=True) #If Smoothing or none - both are in RBG
+
+            # elif filter_type == "None":
+            #     st.session_state.count = 0
+
+            if st.button("Apply New Filter"):
+                st.write("Button clicked!")
+                st.session_state.count += 1
+                st.rerun()
+
+            if st.button("Revert", on_click=set_count, args=[0]):
+                st.write("Reverted")
+                st.session_state.count = 0
+                st.rerun()
+
+            st.slider("Choose a value")
+
+            # Display the current count
+            st.write("Current count:", st.session_state.count)
 
 if __name__ == "__main__":
     main()
