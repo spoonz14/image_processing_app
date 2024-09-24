@@ -12,6 +12,14 @@ def apply_filters(image, filter_type): #Takes filter type as input and applies t
         return image
 
 def main():
+    # Initialization
+    if 'key' not in st.session_state:
+        st.session_state['key'] = 'value'
+
+    # Session State also supports attribute based syntax
+    if 'key' not in st.session_state:
+        st.session_state.key = 'value'
+
     st.title("Image Processor")
 
     uploaded_file = st.file_uploader("Choose an Image to Process", type=["jpeg", "jpg", "png"]) #accepts JPEG, PNG, and JPG image types for processing
@@ -24,7 +32,7 @@ def main():
 
         st.image(img, caption="Uploaded Image", use_column_width=True)
 
-        filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing"])
+        filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing"], key="filter_choice")
 
         saved_img = ' '
         processed_img = apply_filters(img_array, filter_type)
@@ -33,7 +41,7 @@ def main():
 
         if filter_type == "Grayscale":
             st.image(processed_img, caption="Processed Image", use_column_width=True, channels="GRAY") #If Greyscale filter chosen
-        else:
+        elif filter_type == "Smoothing":
             st.image(processed_img, caption="Processed Image", use_column_width=True) #If Smoothing or none - both are in RBG 
 
 if __name__ == "__main__":
