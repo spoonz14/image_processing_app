@@ -10,15 +10,15 @@ def choose_smoothing(smoothing_choice):
     elif smoothing_choice == "Median":
         return "Median"
 
-def apply_filters(image, filter_type):
+def apply_filters(image, filter_type, kernel):
     # Ensure the input image is in the correct format for the selected filter
     if filter_type == "Grayscale":
         if len(image.shape) == 3:  # Only convert if it's a color image
             return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     elif filter_type == "GaussianBlur":
-        return cv2.GaussianBlur(image, (15, 15), 0)
+        return cv2.GaussianBlur(image, (kernel, kernel), 0)
     elif filter_type == "Median":
-        return cv2.medianBlur(image, 3)
+        return cv2.medianBlur(image, kernel)
     elif filter_type == "Equalize":
         if len(image.shape) == 3:  # Convert to grayscale if it's a color image
             gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -32,8 +32,20 @@ def apply_filters(image, filter_type):
         clahe = cv2.createCLAHE(clipLimit=5)
         return clahe.apply(gray_image)
     elif filter_type == "Binary":
-        _, binary_image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        if len(image.shape) == 3:  # Convert to grayscale if it's a color image
+            gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        else:
+            gray_image = image
+        _, binary_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         return cv2.bitwise_not(binary_image)  # Invert the binary image
+    elif filter_type == "Erosion":
+        if len(image.shape) == 3:  # Convert to grayscale if it's a color image
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        return cv2.erode(image, np.ones(kernel, np.uint8), iterations=1)
+    elif filter_type == "Dilation":
+        if len(image.shape) == 3:  # Convert to grayscale if it's a color image
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        return cv2.dilate(image, np.ones(kernel, np.uint8), iterations=1)
     return image  # Return the original image if filter type is None
 
 def main():
@@ -52,6 +64,7 @@ def main():
         img = Image.open(uploaded_file)
         img_array = np.array(img)
 
+
         # Display the uploaded image only once
         if st.session_state.saved_img is None:
             st.image(img, caption="Uploaded Image", use_column_width=True)
@@ -64,14 +77,17 @@ def main():
 
         smoothing_choice = st.selectbox("Choose smoothing type", ["GaussianBlur", "Median"])
 
-        filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing", "Equalize", "CLAHE", "Binary"], key="filter_choice")
+        filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing", "Equalize", "CLAHE", "Binary", "Dilation", "Erosion" ],
+                                   key="filter_choice")
+
+        kernel = st.slider("Choose Kernel Size (odd values only)", min_value=3, max_value=21, step=2)
 
         if st.button("Apply Filter"):
             if filter_type == "Smoothing":
                 chosen_smoothing = choose_smoothing(smoothing_choice)
-                st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_smoothing)
+                st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_smoothing, kernel)
             elif filter_type != "None":
-                st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type)
+                st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, kernel)
 
             # Update saved_img to the latest processed image only if filter was applied
             if filter_type != "None":
@@ -86,6 +102,10 @@ def main():
                 st.image(st.session_state.processed_img, caption="Processed Image (Equalization)", use_column_width=True)
             elif filter_type == "CLAHE":
                 st.image(st.session_state.processed_img, caption="Processed Image (CLAHE)", use_column_width=True)
+            elif filter_type == "Erosion":
+                st.image(st.session_state.processed_img, caption="Processed Image (Eroded)", use_column_width=True)
+            elif filter_type == "Dilation":
+                st.image(st.session_state.processed_img, caption="Processed Image (Dilation)", use_column_width=True)
             elif filter_type == "Binary":
                 st.image(st.session_state.processed_img, caption="Processed Image (Binary)", use_column_width=True)
 
