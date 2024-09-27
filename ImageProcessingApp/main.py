@@ -63,6 +63,12 @@ def main():
     # Upload an image
     uploaded_file = st.file_uploader("Choose an Image to Process", type=["jpeg", "jpg", "png"])
 
+    # Check if the uploaded file is None (indicating it has been removed)
+    if uploaded_file is None and st.session_state.saved_img is not None:
+        st.session_state.saved_img = None  # Reset saved image
+        st.session_state.processed_img = None  # Reset processed image
+        st.rerun()  # Rerun the app to reset the state
+
     if uploaded_file is not None:
         st.write("File Uploaded")
         img = Image.open(uploaded_file)
