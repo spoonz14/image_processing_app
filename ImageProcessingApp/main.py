@@ -121,7 +121,7 @@ def main():
             if filter_type != "None":
                 st.session_state.saved_img = st.session_state.processed_img.copy()
                 st.session_state.history_images.append(st.session_state.processed_img.copy())
-                st.session_state.history_text.append(filter_type)
+                st.session_state.history_text.append(f'{filter_type} - Kernel Size: {kernel} - Threshold: {threshold} - ClipLimit: {clip_limit}')
 
             # Display the processed images
             if filter_type == "Grayscale":
@@ -145,6 +145,9 @@ def main():
             elif filter_type == "Binary":
                 st.image(st.session_state.processed_img, caption="Processed Image (Binary)", use_column_width=True)
 
+            if filter_type != None:# Display history of applied filters
+                st.text_area("History of Applied Filters", "\n".join(st.session_state.history_text), height=200)
+
         if st.button("Undo"):
             if st.session_state.history_images:
                 st.session_state.history_images.pop()
@@ -162,8 +165,7 @@ def main():
             st.session_state.processed_img = None  # Reset processed image
             st.rerun()  # Rerun the app to reset the state
 
-        # Display history of applied filters
-    st.text_area("History of Applied Filters", "\n".join(st.session_state.history_text), height=200)
+
 
 if __name__ == "__main__":
     main()
