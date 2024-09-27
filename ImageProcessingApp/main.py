@@ -57,6 +57,10 @@ def main():
         st.session_state.saved_img = None
     if 'processed_img' not in st.session_state:
         st.session_state.processed_img = None
+    if 'history_images' not in st.session_state:
+        st.session_state.history_images = []
+    if 'history_text' not in st.session_state:
+        st.session_state.history_text = []
 
     st.title("Image Processor")
 
@@ -67,6 +71,8 @@ def main():
     if uploaded_file is None and st.session_state.saved_img is not None:
         st.session_state.saved_img = None  # Reset saved image
         st.session_state.processed_img = None  # Reset processed image
+        st.session_state.history_images = []  # Clear history
+        st.session_state.history_text = []  # Clear history
         st.rerun()  # Rerun the app to reset the state
 
     if uploaded_file is not None:
@@ -85,11 +91,8 @@ def main():
             # Display the original uploaded image
             st.image(st.session_state.saved_img, caption="Original Image", use_column_width=True)
 
-
-
         filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing", "Equalize", "CLAHE", "Binary", "Dilation", "Erosion" ],
                                    key="filter_choice")
-
 
         if filter_type == "Smoothing":
             smoothing_choice = st.selectbox("Choose smoothing type", ["GaussianBlur", "Median"])
@@ -117,6 +120,8 @@ def main():
             # Update saved_img to the latest processed image only if filter was applied
             if filter_type != "None":
                 st.session_state.saved_img = st.session_state.processed_img.copy()
+                st.session_state.history_images.append(st.session_state.processed_img.copy())
+                st.session_state.history_text.append(filter_type)
 
             # Display the processed images
             if filter_type == "Grayscale":
@@ -140,10 +145,25 @@ def main():
             elif filter_type == "Binary":
                 st.image(st.session_state.processed_img, caption="Processed Image (Binary)", use_column_width=True)
 
+        if st.button("Undo"):
+            if st.session_state.history_images:
+                st.session_state.history_images.pop()
+                st.session_state.history_text.pop()
+
+                if st.session_state.history_images:
+                    st.session_state.processed_img = st.session_state.history_images[-1]
+                    st.session_state.saved_img = st.session_state.processed_img.copy()
+                else:
+                    st.session_state.saved_img = None
+                    st.session_state.processed_img = None
+
         if st.button("Reset"):
             st.session_state.saved_img = None  # Reset saved image
             st.session_state.processed_img = None  # Reset processed image
             st.rerun()  # Rerun the app to reset the state
+
+        # Display history of applied filters
+    st.text_area("History of Applied Filters", "\n".join(st.session_state.history_text), height=200)
 
 if __name__ == "__main__":
     main()
