@@ -4,12 +4,16 @@ import cv2
 from PIL import Image
 
 # Function to change the smoothing type
-def choose_smoothing(smoothing_choice):
+def choose_filter(filter_choice):
     # Change filters depending on choice input
-    if smoothing_choice == "GaussianBlur":
+    if filter_choice == "GaussianBlur":
         return "GaussianBlur"
-    elif smoothing_choice == "Median":
-        return "Median"
+    elif filter_choice == "MedianBlur":
+        return "MedianBlur"
+    elif filter_choice == "Normal":
+        return "Normal"
+    elif filter_choice == "Otsu":
+        return "Otsu"
 
 # Function to apply filters
 def apply_filters(image, filter_type, adjustable_value):
@@ -19,7 +23,7 @@ def apply_filters(image, filter_type, adjustable_value):
             return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     elif filter_type == "GaussianBlur":         # Blurs based off a mathematical formula
         return cv2.GaussianBlur(image, (adjustable_value, adjustable_value), 0)
-    elif filter_type == "Median":               # Blurs based off the median value of the kernel
+    elif filter_type == "MedianBlur":               # Blurs based off the median value of the kernel
         return cv2.medianBlur(image, adjustable_value)
     elif filter_type == "Equalize":             # Stretches the average value across the image
         if len(image.shape) == 3:               # Extra check to ensure single channel/Grayscale input image
@@ -33,12 +37,19 @@ def apply_filters(image, filter_type, adjustable_value):
             gray_image = image
         clahe = cv2.createCLAHE(adjustable_value)
         return clahe.apply(gray_image)
-    elif filter_type == "Binary":
+    elif filter_type == "Normal":
         if len(image.shape) == 3:               # Extra check to ensure Grayscale input image
             gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             gray_image = image
-        _, binary_image = cv2.threshold(gray_image, adjustable_value, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        _, binary_image = cv2.threshold(gray_image, adjustable_value, 255, cv2.THRESH_BINARY)
+        return cv2.bitwise_not(binary_image)    # Invert the binary image
+    elif filter_type == "Otsu":
+        if len(image.shape) == 3:               # Extra check to ensure Grayscale input image
+            gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        else:
+            gray_image = image
+        _, binary_image = cv2.threshold(gray_image, adjustable_value, 255, cv2.THRESH_OTSU)
         return cv2.bitwise_not(binary_image)    # Invert the binary image
     elif filter_type == "Erosion":
         if len(image.shape) == 3:               # Extra check to ensure Grayscale input image
@@ -95,13 +106,22 @@ def main():
                                    key="filter_choice")
 
         if filter_type == "Smoothing":
-            smoothing_choice = st.selectbox("Choose smoothing type", ["GaussianBlur", "Median"])
-            chosen_smoothing = choose_smoothing(smoothing_choice)
+            filter_choice = st.selectbox("Choose smoothing type", ["GaussianBlur", "MedianBlur"])
+            chosen_filter = choose_filter(filter_choice)
             adjustable_value = st.slider("Choose Kernel Size (odd values only)", min_value=3, max_value=21, step=2, value=3)
-            st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_smoothing, adjustable_value)
+            st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_choice, adjustable_value)
         elif filter_type == "Binary":
-            adjustable_value = st.slider("Choose Threshold Value: ", min_value=0, max_value=255, value=50)
-            st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, adjustable_value)
+            filter_choice = st.selectbox("Choose binarization type", ["Normal", "Otsu"])
+            chosen_filter = choose_filter(filter_choice)
+
+            if filter_choice == "Normal":
+                adjustable_value = st.slider("Choose Threshold Value: ", min_value=0, max_value=255, value=50)
+                st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_filter, adjustable_value)
+
+            elif filter_choice == "Otsu":
+                adjustable_value = 0
+                st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_filter,
+                                                               adjustable_value)
         elif filter_type == "CLAHE":
             adjustable_value = st.slider("Enter the ClipLimit: ", min_value=1, max_value=30, value=5)
             st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, adjustable_value)
@@ -114,31 +134,45 @@ def main():
             if filter_type != "None":
                 st.session_state.saved_img = st.session_state.processed_img.copy()
                 st.session_state.history_images.append(st.session_state.processed_img.copy())
-                st.session_state.history_text.append(f'{filter_type} - Kernel Size: {adjustable_value} / Threshold: {adjustable_value} / ClipLimit: {adjustable_value}')
+                #st.session_state.history_text.append(f'{filter_type} - Kernel Size: {adjustable_value} / Threshold: {adjustable_value} / ClipLimit: {adjustable_value}')
 
             # Display the processed images
             if filter_type == "Grayscale":
                 st.image(st.session_state.processed_img, caption="Processed Image (Grayscale)", use_column_width=True, channels="GRAY")
+                st.session_state.history_text.append(
+                    f'{filter_type}')
 
             elif filter_type == "Smoothing":
                 st.image(st.session_state.processed_img, caption="Processed Image (Smoothing)", use_column_width=True)
+                st.session_state.history_text.append(
+                    f'{chosen_filter} - Kernel Size: {adjustable_value}')
 
             elif filter_type == "Equalize":
                 st.image(st.session_state.processed_img, caption="Processed Image (Equalization)", use_column_width=True)
+                st.session_state.history_text.append(
+                    f'{filter_type}')
 
             elif filter_type == "CLAHE":
                 st.image(st.session_state.processed_img, caption="Processed Image (CLAHE)", use_column_width=True)
+                st.session_state.history_text.append(
+                    f'{filter_type} - ClipLimit: {adjustable_value}')
 
             elif filter_type == "Erosion":
                 st.image(st.session_state.processed_img, caption="Processed Image (Eroded)", use_column_width=True)
+                st.session_state.history_text.append(
+                    f'{filter_type} - Kernel Size: {adjustable_value}')
 
             elif filter_type == "Dilation":
                 st.image(st.session_state.processed_img, caption="Processed Image (Dilation)", use_column_width=True)
+                st.session_state.history_text.append(
+                    f'{filter_type} - Kernel Size: {adjustable_value}')
 
             elif filter_type == "Binary":
                 st.image(st.session_state.processed_img, caption="Processed Image (Binary)", use_column_width=True)
+                st.session_state.history_text.append(
+                    f'{chosen_filter} - Threshold: {adjustable_value}')
 
-            if filter_type != None:# Display history of applied filters
+            if filter_type != None or filter_type == None: # Display history of applied filters
                 st.text_area("History of Applied Filters", "\n".join(st.session_state.history_text), height=200)
 
         if st.button("Undo"):
@@ -149,6 +183,7 @@ def main():
                 if st.session_state.history_images:
                     st.session_state.processed_img = st.session_state.history_images[-1]
                     st.session_state.saved_img = st.session_state.processed_img.copy()
+                    st.text_area("History of Applied Filters", "\n".join(st.session_state.history_text), height=200)
                 else:
                     st.session_state.saved_img = None
                     st.session_state.processed_img = None
