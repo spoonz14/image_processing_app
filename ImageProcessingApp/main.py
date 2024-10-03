@@ -12,15 +12,15 @@ def choose_smoothing(smoothing_choice):
         return "Median"
 
 # Function to apply filters
-def apply_filters(image, filter_type, kernel, threshold, clip_limit):
+def apply_filters(image, filter_type, adjustable_value):
 
     if filter_type == "Grayscale":              # Converts to single colour-channel image
         if len(image.shape) == 3:               # Only convert if it's a color image
             return cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     elif filter_type == "GaussianBlur":         # Blurs based off a mathematical formula
-        return cv2.GaussianBlur(image, (kernel, kernel), 0)
+        return cv2.GaussianBlur(image, (adjustable_value, adjustable_value), 0)
     elif filter_type == "Median":               # Blurs based off the median value of the kernel
-        return cv2.medianBlur(image, kernel)
+        return cv2.medianBlur(image, adjustable_value)
     elif filter_type == "Equalize":             # Stretches the average value across the image
         if len(image.shape) == 3:               # Extra check to ensure single channel/Grayscale input image
             gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
@@ -31,23 +31,23 @@ def apply_filters(image, filter_type, kernel, threshold, clip_limit):
             gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             gray_image = image
-        clahe = cv2.createCLAHE(clip_limit)
+        clahe = cv2.createCLAHE(adjustable_value)
         return clahe.apply(gray_image)
     elif filter_type == "Binary":
         if len(image.shape) == 3:               # Extra check to ensure Grayscale input image
             gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             gray_image = image
-        _, binary_image = cv2.threshold(gray_image, threshold, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        _, binary_image = cv2.threshold(gray_image, adjustable_value, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         return cv2.bitwise_not(binary_image)    # Invert the binary image
     elif filter_type == "Erosion":
         if len(image.shape) == 3:               # Extra check to ensure Grayscale input image
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        return cv2.erode(image, np.ones(kernel, np.uint8), iterations=1)
+        return cv2.erode(image, np.ones(adjustable_value, np.uint8), iterations=1)
     elif filter_type == "Dilation":
         if len(image.shape) == 3:               # Extra check
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        return cv2.dilate(image, np.ones(kernel, np.uint8), iterations=1)
+        return cv2.dilate(image, np.ones(adjustable_value, np.uint8), iterations=1)
     return image                                # Return the original image if filter type is None
 
 def main():
@@ -97,31 +97,24 @@ def main():
         if filter_type == "Smoothing":
             smoothing_choice = st.selectbox("Choose smoothing type", ["GaussianBlur", "Median"])
             chosen_smoothing = choose_smoothing(smoothing_choice)
-            kernel = st.slider("Choose Kernel Size (odd values only)", min_value=3, max_value=21, step=2, value=3)
-            threshold = 0  # Smoothing doesnt use this
-            clip_limit = 0 # Or this
-            st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_smoothing, kernel, threshold, clip_limit)
+            adjustable_value = st.slider("Choose Kernel Size (odd values only)", min_value=3, max_value=21, step=2, value=3)
+            st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_smoothing, adjustable_value)
         elif filter_type == "Binary":
-            kernel = 0 # Not used by Binary filter
-            threshold = st.slider("Choose Threshold Value: ", min_value=0, max_value=255, value=50)
-            clip_limit = 0 # Not used by Binary FIlter
-            st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, kernel, threshold, clip_limit)
+            adjustable_value = st.slider("Choose Threshold Value: ", min_value=0, max_value=255, value=50)
+            st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, adjustable_value)
         elif filter_type == "CLAHE":
-            kernel = 0 # Not used by CLAHE
-            threshold = 0 # Not used by CLAHE
-            clip_limit = st.slider("Enter the ClipLimit: ", min_value=1, max_value=30, value=5)
+            adjustable_value = st.slider("Enter the ClipLimit: ", min_value=1, max_value=30, value=5)
+            st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, adjustable_value)
         elif filter_type != "None":
-            threshold = 0
-            kernel = 0
-            clip_limit = 0
-            st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, kernel, threshold, clip_limit)
+            adjustable_value = 0
+            st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, adjustable_value)
 
         if st.button("Apply Filter"):
             # Update saved_img to the latest processed image only if filter was applied
             if filter_type != "None":
                 st.session_state.saved_img = st.session_state.processed_img.copy()
                 st.session_state.history_images.append(st.session_state.processed_img.copy())
-                st.session_state.history_text.append(f'{filter_type} - Kernel Size: {kernel} - Threshold: {threshold} - ClipLimit: {clip_limit}')
+                st.session_state.history_text.append(f'{filter_type} - Kernel Size: {adjustable_value} / Threshold: {adjustable_value} / ClipLimit: {adjustable_value}')
 
             # Display the processed images
             if filter_type == "Grayscale":
@@ -163,6 +156,8 @@ def main():
         if st.button("Reset"):
             st.session_state.saved_img = None  # Reset saved image
             st.session_state.processed_img = None  # Reset processed image
+            st.session_state.history_images = []
+            st.session_state.history_text = []
             st.rerun()  # Rerun the app to reset the state
 
 
