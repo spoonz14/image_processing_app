@@ -98,6 +98,7 @@ def main():
             st.session_state.saved_img = img_array
             st.session_state.processed_img = img_array.copy()  # Initialize processed image
 
+
         elif st.session_state.saved_img is not None:
             # Display the original uploaded image
             st.image(st.session_state.saved_img, caption="Original Image", use_column_width=True)
@@ -110,6 +111,7 @@ def main():
             chosen_filter = choose_filter(filter_choice)
             adjustable_value = st.slider("Choose Kernel Size (odd values only)", min_value=3, max_value=21, step=2, value=3)
             st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_choice, adjustable_value)
+
         elif filter_type == "Binary":
             filter_choice = st.selectbox("Choose binarization type", ["Normal", "Otsu"])
             chosen_filter = choose_filter(filter_choice)
@@ -120,11 +122,16 @@ def main():
 
             elif filter_choice == "Otsu":
                 adjustable_value = 0
-                st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_filter,
-                                                               adjustable_value)
+                st.session_state.processed_img = apply_filters(st.session_state.saved_img, chosen_filter, adjustable_value)
+
         elif filter_type == "CLAHE":
             adjustable_value = st.slider("Enter the ClipLimit: ", min_value=1, max_value=30, value=5)
             st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, adjustable_value)
+            st.text_area("History of Applied Filters", "\n".join(st.session_state.history_text), height=200)
+
+
+
+
         elif filter_type != "None":
             adjustable_value = 0
             st.session_state.processed_img = apply_filters(st.session_state.saved_img, filter_type, adjustable_value)
@@ -170,7 +177,7 @@ def main():
             elif filter_type == "Binary":
                 st.image(st.session_state.processed_img, caption="Processed Image (Binary)", use_column_width=True)
                 st.session_state.history_text.append(
-                    f'{chosen_filter} - Threshold: {adjustable_value}')
+                    f'{filter_type} - {chosen_filter} - Threshold: {adjustable_value}')
 
             if filter_type != None or filter_type == None: # Display history of applied filters
                 st.text_area("History of Applied Filters", "\n".join(st.session_state.history_text), height=200)
