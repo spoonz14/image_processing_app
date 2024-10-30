@@ -22,7 +22,7 @@ def contains_word(filename, word):
 # Load the pre-trained model
 model = tf.keras.models.load_model('D:\PythonProjects\image_processing_app\ImageProcessingApp\Melanoma-003.keras')
 
-folder_path = 'D:\\PythonProjects\\image_processing_app\\ImageProcessingApp\\TestCombined'
+folder_path = 'D:\\PythonProjects\\image_processing_app\\ImageProcessingApp\\Test1s'
 
 # Counter to track positives and negatives
 positive_counter = 0
@@ -66,17 +66,18 @@ for filename in os.listdir(folder_path):
     else:
         print('The lesion is classified as Not Melanoma.')
         negative_counter = negative_counter + 1
-        word_to_check = 'Melanoma'
+        word_to_check = 'malignant'
         if contains_word(filename, word_to_check):
             false_n_counter = false_n_counter + 1
             print('(False Negative!)')
         else:
             true_n_counter = true_n_counter + 1
 
-    # Display the image
+    ##Display the image
     cv2.imshow('Processed Image', image_to_show)
     cv2.waitKey(0)  # Wait for a key press to close the window
     cv2.destroyAllWindows()  # Close the window
+
     counter = counter + 1
 
 # Calculating accuracy
