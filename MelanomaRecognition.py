@@ -1,6 +1,7 @@
 import os
 import tensorflow as tf
 import cv2
+import random
 import numpy as np
 from tensorflow.keras.preprocessing import image
 
@@ -22,7 +23,7 @@ def contains_word(filename, word):
 # Load the pre-trained model
 model = tf.keras.models.load_model('D:\PythonProjects\image_processing_app\ImageProcessingApp\Melanoma-003.keras')
 
-folder_path = 'D:\\PythonProjects\\image_processing_app\\ImageProcessingApp\\Test1s'
+folder_path = 'D:\\PythonProjects\\image_processing_app\\ImageProcessingApp\\TestCombined'
 
 # Counter to track positives and negatives
 positive_counter = 0
@@ -38,13 +39,15 @@ true_p_counter = 0
 # Counter for true negatives
 true_n_counter = 0
 
-for filename in os.listdir(folder_path):
+filenames = os.listdir(folder_path)
+random.shuffle(filenames)
+
+for filename in filenames:
     file_path = os.path.join(folder_path, filename)
     processed_image = preprocess_image(file_path)
 
     # Convert to uint8 for display
-    image_to_show = (processed_image[0] * 255).astype(np.uint8)  # Get the first image and convert
-
+    #image_to_show = (processed_image[0] * 255).astype(np.uint8)  # Get the first image and convert
     
     # Predict the class
     prediction = model.predict(processed_image)
@@ -54,7 +57,7 @@ for filename in os.listdir(folder_path):
     print(f'Prediction shape: {prediction.shape}')
 
     # Interpret the result
-    if prediction[0] > 0.5:
+    if prediction[0] > 0.35:
         print('The lesion is classified as Melanoma.')
         positive_counter = positive_counter + 1
         word_to_check = 'benign'
@@ -73,10 +76,10 @@ for filename in os.listdir(folder_path):
         else:
             true_n_counter = true_n_counter + 1
 
-    ##Display the image
-    cv2.imshow('Processed Image', image_to_show)
-    cv2.waitKey(0)  # Wait for a key press to close the window
-    cv2.destroyAllWindows()  # Close the window
+    # #Display the image
+    # cv2.imshow('Processed Image', image_to_show)
+    # cv2.waitKey(0)  # Wait for a key press to close the window
+    # cv2.destroyAllWindows()  # Close the window
 
     counter = counter + 1
 
@@ -92,10 +95,11 @@ precision = true_p_counter/total_positives
 precision = round(precision*100)
 
 # Calculating recall
-total_negatives = true_n_counter + false_n_counter
-recall = false_n_counter/total_negatives
+total_true_positives = true_p_counter + false_n_counter
+recall = true_p_counter/total_true_positives
 recall = recall*100
 recall = round(recall)
+
 print(" ")
 print(" ")
 print('************ STATS **************')
