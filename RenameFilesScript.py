@@ -11,9 +11,9 @@ choice = input("Would you like to rename to benign or malignant (b,m)?: ")
 
 # Set the folder path based on user choice
 if choice in ('B', 'b'):
-    folder_path = 'D:\\PythonProjects\\image_processing_app\\ImageProcessingApp\\Test0s'
+    folder_path = 'D:\\PythonProjects\\image_processing_app\\Test0s'
 elif choice in ('M', 'm'):
-    folder_path = 'D:\\PythonProjects\\image_processing_app\\ImageProcessingApp\\Test1s'
+    folder_path = 'D:\\PythonProjects\\image_processing_app\\Test1s'
 else:
     print("Invalid choice. Program aborted.")
     exit()  # Exit the program if choice is invalid

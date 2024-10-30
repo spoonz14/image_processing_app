@@ -21,9 +21,9 @@ def contains_word(filename, word):
     return word.lower() in filename.lower()
 
 # Load the pre-trained model
-model = tf.keras.models.load_model('D:\PythonProjects\image_processing_app\ImageProcessingApp\Melanoma-003.keras')
+model = tf.keras.models.load_model('D:\PythonProjects\image_processing_app\Melanoma-003.keras')
 
-folder_path = 'D:\\PythonProjects\\image_processing_app\\ImageProcessingApp\\TestCombined'
+folder_path = 'D:\\PythonProjects\\image_processing_app\\TestCombined'
 
 # Counter to track positives and negatives
 positive_counter = 0
@@ -96,9 +96,12 @@ precision = round(precision*100)
 
 # Calculating recall
 total_true_positives = true_p_counter + false_n_counter
-recall = true_p_counter/total_true_positives
-recall = recall*100
-recall = round(recall)
+if true_p_counter and total_true_positives != 0:
+    recall = true_p_counter/total_true_positives
+    recall = recall*100
+    recall = round(recall)
+else:
+    recall = "Recall error: divided by zero."
 
 print(" ")
 print(" ")
