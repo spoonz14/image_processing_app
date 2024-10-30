@@ -110,6 +110,14 @@ def main():
             kernel = 0 # Not used by CLAHE
             threshold = 0 # Not used by CLAHE
             clip_limit = st.slider("Enter the ClipLimit: ", min_value=1, max_value=30, value=5)
+        elif filter_type == "Erosion":
+            clip_limit = 0  # Not used by CLAHE
+            threshold = 0  # Not used by CLAHE
+            kernel = st.slider("Enter the Kernel Size: ", min_value=1, max_value=30, value=5)
+        elif filter_type == "Dilation":
+            clip_limit = 0  # Not used by CLAHE
+            threshold = 0  # Not used by CLAHE
+            kernel = st.slider("Enter the Kernel Size: ", min_value=1, max_value=30, value=5)
         elif filter_type != "None":
             threshold = 0
             kernel = 0
