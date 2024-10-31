@@ -81,7 +81,7 @@ else:
 
 print(" ")
 print(" ")
-print('************ STATS **************')
+print('************ STATS *************')
 print(f'Total predictions: {total_predictions}')
 print(f'Total accurate predictions: {total_true_predictions}')
 print(f'Number of positives: {positive_counter}')
