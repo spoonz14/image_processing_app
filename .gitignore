@@ -4,3 +4,4 @@ ImageProcessingApp/skin_cancer_model.h5
 *.jpg
 *.keras
 *.h5
+venv
