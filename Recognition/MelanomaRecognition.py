@@ -3,7 +3,6 @@ import tensorflow as tf
 import cv2
 import random
 import numpy as np
-from tensorflow.keras.preprocessing import image
 
 def preprocess_image(img_path):
     # Load the image using OpenCV

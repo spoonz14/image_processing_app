@@ -1,6 +1,4 @@
 from transformers import AutoImageProcessor, AutoModelForImageClassification
-from PIL import Image
-import requests
 import os
 import random
 import cv2
