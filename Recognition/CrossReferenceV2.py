@@ -29,10 +29,7 @@ processor = AutoImageProcessor.from_pretrained("NeuronZero/SkinCancerClassifier"
 
 folder_path = 'D:\\PythonProjects\\image_processing_app\\TestCombined'
 
-# Variables to track model predictions
-model1_prediction = ''
-model2_prediction = ''
-model3_prediction = ''
+
 # Counter to track positives and negatives
 positive_counter = 0
 negative_counter = 0
@@ -51,6 +48,8 @@ filenames = os.listdir(folder_path)
 random.shuffle(filenames)
 
 for filename in filenames:
+    # Counter to track model predictions
+    positive_prediction_counter = 0
     file_path = os.path.join(folder_path, filename)
     processed_image = preprocess_image(file_path)
     image = cv2.imread(file_path)
@@ -58,33 +57,73 @@ for filename in filenames:
     # Convert to uint8 for display
     #image_to_show = (processed_image[0] * 255).astype(np.uint8)  # Get the first image and convert
     
+    print("First Prediction:")
     # Predict the class
-    prediction = model1.predict(processed_image)
+    prediction1 = model1.predict(processed_image)
     print(f'Filename: {filename}')
-    print(f'Prediction: {prediction}')
+    print(f'Prediction: {prediction1}')
     # Check the shape of the prediction
-    print(f'Prediction shape: {prediction.shape}')
+    print(f'Prediction shape: {prediction1.shape}')
 
     # Interpret the result
-    if prediction[0] > 0.3:
-        
-        inputs = processor(images=image, return_tensors="pt")
-        outputs = model2(**inputs)
-        logits = outputs.logits
-        predicted_class_idx = logits.argmax(-1).item()
-        prediction = model2.config.id2label[predicted_class_idx]
-        print(f'Cross Reference Prediction: {prediction}')
-        if prediction != "NV":
-            print(f'Filename: {filename}')
-            print('The lesion is classified as Melanoma.')
-            positive_counter = positive_counter + 1
-            word_to_check = 'benign'
-            if contains_word(filename, word_to_check):
-                false_p_counter = false_p_counter + 1
-                print('(False Positive!)')
+    if prediction1[0] > 0.3:
+        # Increment the prediction counter
+        positive_prediction_counter += 1
+        print(f'Positve Predictions: {positive_prediction_counter}')
+
+    print("Second prediction:")
+    inputs = processor(images=image, return_tensors="pt")
+    outputs = model2(**inputs)
+    logits = outputs.logits
+    predicted_class_idx = logits.argmax(-1).item()
+    prediction2 = model2.config.id2label[predicted_class_idx]
+    print(f'Cross Reference Prediction: {prediction2}')
+    if prediction2 != "NV":
+        positive_prediction_counter +=1
+        print(f'Positve Predictions: {positive_prediction_counter}')
+
+    if positive_prediction_counter == 2:
+        print(f'Filename: {filename}')
+        print('The lesion is classified as Melanoma.')
+        positive_counter = positive_counter + 1
+        word_to_check = 'benign'
+        if contains_word(filename, word_to_check):
+            false_p_counter = false_p_counter + 1
+            print('(False Positive!)')
+        else:
+            true_p_counter = true_p_counter +1
+
+    elif positive_prediction_counter == 1:
+        print("Third Prediction:")
+        prediction3 = model3.predict(processed_image)
+
+        # Extract the predicted class (0 = benign, 1 = malignant)
+        predicted_class = np.argmax(prediction3, axis=1)
+        predicted_probability = np.max(prediction3)
+        print(f'Predicted class: {predicted_class}')
+        print(f'Predicted probability: {predicted_probability}')
+
+        if predicted_class == 1:
+            if predicted_probability < 0.63:
+                print(f'Likely Benign.')
+                negative_counter = negative_counter + 1
+                word_to_check = "malignant"
+                if contains_word(filename, word_to_check):
+                    print("False negative!")
+                    false_n_counter = false_n_counter + 1
+                else:
+                    true_n_counter = true_n_counter + 1
             else:
-                true_p_counter = true_p_counter +1
-    else:
+                print(f'Likely Malignant with {predicted_probability*100:.2f}% confidence.')
+                positive_counter = positive_counter + 1
+                word_to_check = "benign"
+                if contains_word(filename, word_to_check):
+                    print("False positive!")
+                    false_p_counter = false_p_counter + 1
+                else:
+                    true_p_counter = true_p_counter + 1
+
+    elif positive_prediction_counter == 0:
         print('The lesion is classified as Not Melanoma.')
         negative_counter = negative_counter + 1
         word_to_check = 'malignant'
@@ -93,11 +132,6 @@ for filename in filenames:
             print('(False Negative!)')
         else:
             true_n_counter = true_n_counter + 1
-
-    # #Display the image
-    # cv2.imshow('Processed Image', image_to_show)
-    # cv2.waitKey(0)  # Wait for a key press to close the window
-    # cv2.destroyAllWindows()  # Close the window
 
     counter = counter + 1
 
