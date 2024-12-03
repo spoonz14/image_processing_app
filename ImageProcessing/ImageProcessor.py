@@ -83,13 +83,13 @@ def main():
 
         # Display the uploaded image only once
         if st.session_state.saved_img is None:
-            st.image(img, caption="Uploaded Image", use_column_width=True)
+            st.image(img, caption="Uploaded Image", use_container_width=True)
             st.session_state.saved_img = img_array
             st.session_state.processed_img = img_array.copy()  # Initialize processed image
 
         elif st.session_state.saved_img is not None:
             # Display the original uploaded image
-            st.image(st.session_state.saved_img, caption="Original Image", use_column_width=True)
+            st.image(st.session_state.saved_img, caption="Original Image", use_container_width=True)
 
         filter_type = st.selectbox("Choose a Filter", ["None", "Grayscale", "Smoothing", "Equalize", "CLAHE", "Binary", "Dilation", "Erosion" ],
                                    key="filter_choice")
@@ -133,25 +133,25 @@ def main():
 
             # Display the processed images
             if filter_type == "Grayscale":
-                st.image(st.session_state.processed_img, caption="Processed Image (Grayscale)", use_column_width=True, channels="GRAY")
+                st.image(st.session_state.processed_img, caption="Processed Image (Grayscale)", use_container_width=True, channels="GRAY")
 
             elif filter_type == "Smoothing":
-                st.image(st.session_state.processed_img, caption="Processed Image (Smoothing)", use_column_width=True)
+                st.image(st.session_state.processed_img, caption="Processed Image (Smoothing)", use_container_width=True)
 
             elif filter_type == "Equalize":
-                st.image(st.session_state.processed_img, caption="Processed Image (Equalization)", use_column_width=True)
+                st.image(st.session_state.processed_img, caption="Processed Image (Equalization)", use_container_width=True)
 
             elif filter_type == "CLAHE":
-                st.image(st.session_state.processed_img, caption="Processed Image (CLAHE)", use_column_width=True)
+                st.image(st.session_state.processed_img, caption="Processed Image (CLAHE)", use_container_width=True)
 
             elif filter_type == "Erosion":
-                st.image(st.session_state.processed_img, caption="Processed Image (Eroded)", use_column_width=True)
+                st.image(st.session_state.processed_img, caption="Processed Image (Eroded)", use_container_width=True)
 
             elif filter_type == "Dilation":
-                st.image(st.session_state.processed_img, caption="Processed Image (Dilation)", use_column_width=True)
+                st.image(st.session_state.processed_img, caption="Processed Image (Dilation)", use_container_width=True)
 
             elif filter_type == "Binary":
-                st.image(st.session_state.processed_img, caption="Processed Image (Binary)", use_column_width=True)
+                st.image(st.session_state.processed_img, caption="Processed Image (Binary)", use_container_width=True)
 
             if filter_type != None:# Display history of applied filters
                 st.text_area("History of Applied Filters", "\n".join(st.session_state.history_text), height=200)

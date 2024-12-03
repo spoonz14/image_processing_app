@@ -1,8 +1,13 @@
 import os
-import tensorflow as tf
 import cv2
+import random
 import numpy as np
-from tensorflow.keras.preprocessing import image
+import tensorflow as tf
+from transformers import pipeline
+
+
+# Load the pre-trained model
+model = tf.keras.models.load_model('D:\PythonProjects\image_processing_app\skin_cancer_model.keras')
 
 def preprocess_image(img_path):
     # Load the image using OpenCV
@@ -19,11 +24,6 @@ def contains_word(filename, word):
     # Convert both filename and word to lowercase for case-insensitive comparison
     return word.lower() in filename.lower()
 
-# Load the pre-trained model
-model = tf.keras.models.load_model('D:\PythonProjects\image_processing_app\ImageProcessingApp\Melanoma-003.keras')
-
-folder_path = 'D:\\PythonProjects\\image_processing_app\\ImageProcessingApp\\Test1s'
-
 # Counter to track positives and negatives
 positive_counter = 0
 negative_counter = 0
@@ -38,48 +38,52 @@ true_p_counter = 0
 # Counter for true negatives
 true_n_counter = 0
 
-for filename in os.listdir(folder_path):
+#image_path = "D:\PythonProjects\image_processing_app\Test1s\malignant0.jpg"
+# Swapping to folder to iterate through many images
+folder_path = 'D:\\PythonProjects\\image_processing_app\\TestCombined'
+
+# Setting folder as a list directory
+filenames = os.listdir(folder_path)
+random.shuffle(filenames)
+
+for filename in filenames:
     file_path = os.path.join(folder_path, filename)
     processed_image = preprocess_image(file_path)
 
-    # Convert to uint8 for display
-    image_to_show = (processed_image[0] * 255).astype(np.uint8)  # Get the first image and convert
-
     
-    # Predict the class
     prediction = model.predict(processed_image)
+
     print(f'Filename: {filename}')
     print(f'Prediction: {prediction}')
     # Check the shape of the prediction
-    print(f'Prediction shape: {prediction.shape}')
+    #print(f'Prediction shape: {prediction.shape}')
 
-    # Interpret the result
-    if prediction[0] > 0.5:
-        print('The lesion is classified as Melanoma.')
-        positive_counter = positive_counter + 1
-        word_to_check = 'benign'
-        if contains_word(filename, word_to_check):
-            false_p_counter = false_p_counter + 1
-            print('(False Positive!)')
+    # Extract the predicted class (1 = benign, 2 = malignant)
+    predicted_class = np.argmax(prediction, axis=1)
+    predicted_probability = np.max(prediction)
+    print(f'Predicted class: {predicted_class}')
+    print(f'Predicted probability: {predicted_probability}')
+
+    if predicted_class == 1:
+        if predicted_probability < 0.65:
+            print(f'Likely Benign with {predicted_probability*100:.2f}% confidence.')
+            negative_counter = negative_counter + 1
+            word_to_check = "malignant"
+            if contains_word(filename, word_to_check):
+                print("False negative!")
+                false_n_counter = false_n_counter + 1
+            else:
+                true_n_counter = true_n_counter + 1
         else:
-            true_p_counter = true_p_counter +1
-    else:
-        print('The lesion is classified as Not Melanoma.')
-        negative_counter = negative_counter + 1
-        word_to_check = 'malignant'
-        if contains_word(filename, word_to_check):
-            false_n_counter = false_n_counter + 1
-            print('(False Negative!)')
-        else:
-            true_n_counter = true_n_counter + 1
-
-    ##Display the image
-    cv2.imshow('Processed Image', image_to_show)
-    cv2.waitKey(0)  # Wait for a key press to close the window
-    cv2.destroyAllWindows()  # Close the window
-
-    counter = counter + 1
-
+            print(f'Likely Malignant with {predicted_probability*100:.2f}% confidence.')
+            positive_counter = positive_counter + 1
+            word_to_check = "benign"
+            if contains_word(filename, word_to_check):
+                print("False positive!")
+                false_p_counter = false_p_counter + 1
+            else:
+                true_p_counter = true_p_counter + 1
+    
 # Calculating accuracy
 total_predictions = positive_counter + negative_counter
 total_true_predictions = true_p_counter + true_n_counter
@@ -92,10 +96,16 @@ precision = true_p_counter/total_positives
 precision = round(precision*100)
 
 # Calculating recall
-total_negatives = true_n_counter + false_n_counter
-recall = false_n_counter/total_negatives
-recall = recall*100
-recall = round(recall)
+total_true_positives = true_p_counter + false_n_counter
+if true_p_counter and total_true_positives == 0:
+    recall = "Recall error: divided by zero."
+elif false_n_counter == 0:
+    recall = 100
+else:
+    recall = true_p_counter/total_true_positives
+    recall = recall*100
+    recall = round(recall)
+
 print(" ")
 print(" ")
 print('************ STATS **************')
